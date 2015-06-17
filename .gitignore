@@ -1,0 +1,6 @@
+bob.sh
+crap
+results/*
+*.fq
+*.fastq
+*.gz

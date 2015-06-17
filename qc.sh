@@ -17,45 +17,32 @@ fq_r2=$( echo $2 | awk '{gsub(/\/.*\//,"",$1); print}'  )
 fastqc -f fastq -t 4 -o results $fq_r1
 fastqc -f fastq -t 4 -o results $fq_r2
 
-# STEP 2, remove adapter contamination and filter for better quality
+# STEP 2, make subset for testing for alignment
 
-fastq-mcf adaptor.fa $fq_r1 -o results/$fq_r1.filter $fq_r2 -o results/$fq_r2.filter
+seed=$RANDOM
+seqtk sample -s$seed $fq_r1 0.02 > data/"$fq_r1".sub.fq
+seqtk sample -s$seed $fq_r2 0.02 > data/"$fq_r2".sub.fq
 
-rezipper les fastq files	
-	
-	#to construct the reference genome unzip the gz and untar the file
-	gunzip file.tar.gz
-	tar xvf file.tar
-	cat *.fasta > ZmB73_RefGen_v2.fa
-	bwa index ZmB73_RefGen_v2.fa
-	
-bwa mem -t8 /home/alorant/BWA-memGenome2/ZmB73_RefGen_v2.fa Tvid_S11_L006_R1_001.fastq_filt.fastq Tvid_S11_L006_R2_001.fastq_filt.fastq > alignment-Tvid-AGPv2.sam
-	
-bwa mem -t8 /home/alorant/BWA-mem/Zea_mays.AGPv3.22.dna.genome.fa Lo8_S12_L007_R1_001.fastq_filt.fastq Lo8_S12_L007_R2_001.fastq_filt.fastq > alignment-Lo8-AGPv3.sam
+# STEP 3, align 
 
+# check for reference, if not exit
+if [ ! -f data/ref.bwt ]; then
+	echo "ERROR: no reference genome index. Please run ref.sh (see readme)"
+    	exit 1 # terminate and indicate error
+fi;
 
-	#change format from .sam to .bam
-	samtools view -bS alignment-peTvicAGPv2.sam > alignment-peTvicAGPv2.bam
+#align
+bwa mem -t4 data/ref.fasta data/"$fq_r1".sub.fq data/"$fq_r2".sub.fq  | \
+#convert to bam
+samtools view -bS - | \
+#remove duplicates
+samtools rmdup - | \
+#sort 
+samtools sort -o results/"$fq_r1".sorted.bam - 
 	
-	#remove PCR duplicates
-	samtools rmdup alignment-peTvicAGPv2.bam alignment-peTvicAGPv2-rmdup.bam
-	
-	#sort BAM file
-	samtools sort alignment-peTvicAGPv2-rmdup.bam alignment-peTvicAGPv2-rmdup.sorted.bam
-	
-	#Index the BAM file
-	samtools index alignment-peTvicAGPv2-rmdup.sorted.bam
-	
-	#Mapping stat (open txt file)
-	samtools flagstat alignment-peTvicAGPv2-rmdup.sorted.bam > mappingstatsTvicAGPv2.txt
-	
-	#cleanup
-	rm alignment-peTvicAGPv2.bam alignment-pe.sam alignment-pe.rmdup.bam
-	
-#go to programmes/qualimap
-	./qualimap bamqc -bam /home/alorant/BWA-memGenome2/alignment-peTvicAGPv2-rmdup.sorted.bam -outdir qualimapTvicAGPv2_results
+# STEP 4, QC on alignment
 
+samtools flagstat - > results/"$fq_r1".flagstat
 
-compter le nombre de fichier dans le dossier
-ls -Al | wc -l
-	
+#qualimap bamqc -bam results/"$fq_r1".sorted.bam -outdir results/
+
