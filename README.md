@@ -10,7 +10,7 @@ This can be done by running
 
 on most unix systems.  You may need to use ``curl`` instead on a OSX. 
 
-Move the reference into the ``data` directory and rename as ``ref.fastai.gz`` (keep the reference gzipped).
+Move the reference into the ``data`` directory and rename as ``ref.fasta.gz`` (keep the reference gzipped).
 Then run:
 
 	sbatch -p <queue> ref.sh
