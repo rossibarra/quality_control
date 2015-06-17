@@ -6,7 +6,7 @@ set -e
 set -u
 
 # check for reference, if not exit
-if [ ! -f data/ref.fasta ]; then
+if [ ! -f data/ref.fasta.gz ]; then
         echo "ERROR: no reference genome"
         exit 1 # terminate and indicate error
 fi;
