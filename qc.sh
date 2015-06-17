@@ -2,28 +2,24 @@
 #SBATCH -o out/ 
 #SBATCH -e error/
 #SBATCH -J fastq_QC
+#SBATCH -c 4
 set -e
 set -u
 
 module load fastqc fastqmcf bwa/0.7.9a samtools/0.1.19
 
-FASTQ=$1
-
+# Get read 1 and read 2
+fq_r1=$( echo $1 | awk '{gsub(/\/.*\//,"",$1); print}'  )
+fq_r2=$( echo $2 | awk '{gsub(/\/.*\//,"",$1); print}'  )
 
 # STEP 1, check quality
 
-fastqc -f fastq file.fastq
-	cat summary.txt
+fastqc -f fastq -t 4 -o results $fq_r1
+fastqc -f fastq -t 4 -o results $fq_r2
 
+# STEP 2, remove adapter contamination and filter for better quality
 
-#to check the number of read per lib.
-	for i in *fastq.gz; do echo $i >>tmp.txt; gunzip -c $i| grep -c '@J00113' >> tmp.txt ; done
-
-gunzip *.gz
-
-	#remove adapter contamination and filter for better quality
-	fastq-mcf ~/BWA-mem/adaptor.fa Lo8_S12_L007_R1_001.fastq   -o Lo8_S12_L007_R1_001.fastq_filt.fastq Lo8_S12_L007_R2_001.fastq  -o Lo8_S12_L007_R2_001.fastq_filt.fastq  
-fastq-mcf ~/BWA-mem/adaptor.fa Tvid_S11_L006_R1_001.fastq   -o Tvid_S11_L006_R1_001.fastq_filt.fastq Tvid_S11_L006_R2_001.fastq  -o Tvid_S11_L006_R2_001.fastq_filt.fastq 
+fastq-mcf adaptor.fa $fq_r1 -o results/$fq_r1.filter $fq_r2 -o results/$fq_r2.filter
 
 rezipper les fastq files	
 	
