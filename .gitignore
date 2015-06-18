@@ -1,3 +1,6 @@
+error/*
+out/*
+data/*
 bob.sh
 crap
 results/*

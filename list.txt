@@ -1,0 +1,1 @@
+/home/jri/src/quality_control/test_r1.fastq.gz	/home/jri/src/quality_control/test_r2.fastq.gz
